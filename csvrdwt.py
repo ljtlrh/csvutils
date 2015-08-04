@@ -1,13 +1,12 @@
-import csv, random
+import csv
 
 
-class csvrdwt(object):
+class Csvrdwt(object):
 
-
-    def __init__(self, f, new=False ):
+    def __init__(self, f, new=False):
 
         self.f = f
-        self.containter = []
+        self.container = []
         self.sorted = False
         self.sorted_copy = None
         self.fieldnames = None
@@ -21,11 +20,10 @@ class csvrdwt(object):
 
                     for row in reader:
 
-                        self.containter.append({ key : row[key] for key in self.fieldnames })
+                        self.container.append({key: row[key] for key in self.fieldnames})
 
             except Exception as e:
                 raise e
-
 
     def _input_check(self, input):
         '''
@@ -60,7 +58,7 @@ class csvrdwt(object):
         self._input_check(input)
 
         # Check for duplicates, not optimized
-        for row in self.containter:
+        for row in self.container:
             match = True
 
             for key in self.fieldnames:
@@ -71,7 +69,7 @@ class csvrdwt(object):
             if match == True:
                 return
 
-        self.containter.append(input)
+        self.container.append(input)
         self.sorted = False
 
     def remove_row(self, input):
@@ -89,12 +87,12 @@ class csvrdwt(object):
         match ,value = self._bsearch(self.sorted_copy, input, self.fieldnames[0])
 
         if match:
-            self.containter.remove(value)
+            self.container.remove(value)
 
 
     def _sort(self):
 
-        self.sorted_copy = sorted(self.containter,key=lambda k: k[self.fieldnames[0]])
+        self.sorted_copy = sorted(self.container,key=lambda k: k[self.fieldnames[0]])
         self.sorted = True
 
 
@@ -133,7 +131,7 @@ class csvrdwt(object):
 
                 writer = csv.DictWriter(csvfile,fieldnames=self.fieldnames)
                 writer.writeheader()
-                for row in self.containter:
+                for row in self.container:
                     writer.writerow(row)
 
         except Exception as e:
@@ -150,7 +148,7 @@ class csvrdwt(object):
             else:
                 output += '{}'.format(col)
 
-        for num,row in enumerate(self.containter):
+        for num,row in enumerate(self.container):
             output+='\n'
 
             for i,key in enumerate(self.fieldnames):
@@ -164,23 +162,4 @@ class csvrdwt(object):
 
 if __name__ == '__main__':
 
-    a = csvrdwt('names.csv')
-
-    a.write_row({'first': 'brian', 'middle': 't', 'last':'yun'})
-
-    a.save()
-
-    a.write_row({'first': 'Jeremy', 'middle': 't', 'last':'sexton'})
-
-    a.save()
-
-    a.write_row({'first': 'george', 'middle':'y', 'last':'field'})
-
-    a.save()
-
-    a.remove_row({'first': 'Jeremy', 'middle': 't', 'last':'sexton'})
-    a.remove_row({'first': 'brian', 'middle': 't', 'last':'yun'})
-
-    print(a)
-
-    a.save()
+    pass
