@@ -8,8 +8,10 @@ class Csvrdwt(object):
         self.f = f
         self.container = []
         self.sorted = False
-        self.sorted_copy = None
-        self.fieldnames = None
+        self.sorted_copy = []
+        self.fieldnames = []
+        self.sort_criteria = 0
+        self.sort_reversed = False
 
         if not new:
             try:
@@ -26,9 +28,10 @@ class Csvrdwt(object):
                 raise e
 
     def _input_check(self, input):
-        '''
+        """
         Checks for a valid input dictionary
-        '''
+        input:: dictionary
+        """
 
         if not isinstance(input, dict):
             raise TypeError('Row input must be of type dictionary')
@@ -43,7 +46,19 @@ class Csvrdwt(object):
 
         return True
 
+    def _headers_check(self, input):
+        """
+        Checks if the values in input are valid fieldnames
+        """
+
+        return all([ i in self.fieldnames for i in input])
+
     def write_headers(self, input):
+        """
+        Write fieldname headers.
+
+        input:: list of strings
+        """
 
         if isinstance(input, list):
             self.fieldnames = input
@@ -52,9 +67,9 @@ class Csvrdwt(object):
 
 
     def write_row(self, input):
-        '''
+        """
         input - dictionary, keys of dictionary must match the fields of the csv
-        '''
+        """
         self._input_check(input)
 
         # Check for duplicates, not optimized
@@ -66,11 +81,42 @@ class Csvrdwt(object):
                     match = False
                     break
 
-            if match == True:
+            if match:
                 return
 
         self.container.append(input)
         self.sorted = False
+
+    def make_list(self, *values, sort=False):
+
+        if not self._headers_check(values):
+            raise ValueError('Unable to make list with unknown fieldnames.')
+
+        result = list()
+
+        if sort:
+            if not self.sorted:
+                self._sort(reverse=self.sort_reversed)
+
+            for row in self.sorted_copy:
+                if len(values) == 1:
+                    result.append(row[values[0]])
+                else:
+                    result.append(tuple([row[x] for x in values]))
+
+            return result
+
+        for row in self.container:
+            if len(values) == 1:
+                result.append(row[values[0]])
+            else:
+                result.append(tuple([row[x] for x in values]))
+
+        return result
+
+    def make_dict(self):
+
+        pass
 
     def remove_row(self, input):
         '''
@@ -82,17 +128,16 @@ class Csvrdwt(object):
         self._input_check(input)
 
         if not self.sorted:
-            self._sort()
+            self._sort(reverse=self.sort_reversed)
 
-        match ,value = self._bsearch(self.sorted_copy, input, self.fieldnames[0])
+        match ,value = self._bsearch(self.sorted_copy, input, self.fieldnames[self.sort_criteria])
 
         if match:
             self.container.remove(value)
 
+    def _sort(self, reverse=False):
 
-    def _sort(self):
-
-        self.sorted_copy = sorted(self.container,key=lambda k: k[self.fieldnames[0]])
+        self.sorted_copy = sorted(self.container,reverse=reverse,key=lambda k: k[self.fieldnames[self.sort_criteria]])
         self.sorted = True
 
 
@@ -118,7 +163,6 @@ class Csvrdwt(object):
 
         return False, None
 
-
     def save(self, f=None):
         '''
         Saves csv object in memory to file
@@ -137,6 +181,11 @@ class Csvrdwt(object):
         except Exception as e:
             raise e
 
+    def sort_by(self, column=0, reverse=False):
+
+        if 0 <= column < len(self.fieldnames):
+            self.sort_criteria = column
+            self.sort_reversed = reverse
 
     def __str__(self):
 
@@ -162,4 +211,9 @@ class Csvrdwt(object):
 
 if __name__ == '__main__':
 
-    pass
+    a = Csvrdwt('names.csv')
+    a.sort_by(2)
+    a_custom_list = a.make_list('last','first', sort=True)
+
+    print(a)
+    print(a_custom_list)
