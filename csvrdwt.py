@@ -9,7 +9,7 @@ class Csvrdwt(object):
         self.container = []
         self.sorted = False
         self.sorted_copy = []
-        self.fieldnames = []
+        self.fieldnames = None
         self.sort_criteria = 0
         self.sort_reversed = False
 
@@ -53,17 +53,20 @@ class Csvrdwt(object):
 
         return all([ i in self.fieldnames for i in input])
 
-    def write_headers(self, input):
+    def write_headers(self, *input):
         """
         Write fieldname headers.
 
         input:: list of strings
         """
 
-        if isinstance(input, list):
-            self.fieldnames = input
+        if isinstance(input, tuple):
+            if not self.fieldnames is None and len(self.fieldnames) != len(input):
+                raise ValueError('Cannot overwrite file fieldnames with an unequal amount of new fieldnames')
+
+            self.fieldnames = list(input)
         else:
-            raise TypeError('fieldnames must be of type list')
+            raise TypeError('fieldnames must be of type tuple')
 
 
     def write_row(self, input):
@@ -115,6 +118,10 @@ class Csvrdwt(object):
         return result
 
     def make_dict(self):
+
+        pass
+
+    def make_custom_list(self):
 
         pass
 
@@ -211,9 +218,7 @@ class Csvrdwt(object):
 
 if __name__ == '__main__':
 
-    a = Csvrdwt('names.csv')
-    a.sort_by(2)
-    a_custom_list = a.make_list('last','first', sort=True)
+    a = Csvrdwt('test.csv',new=True)
 
-    print(a)
-    print(a_custom_list)
+    a.write_headers('first','m','last')
+    print(a.fieldnames)
