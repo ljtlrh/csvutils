@@ -68,6 +68,7 @@ class Csvrdwt(object):
         else:
             raise TypeError('fieldnames must be of type tuple')
 
+        return
 
     def write_row(self, input):
         """
@@ -90,7 +91,13 @@ class Csvrdwt(object):
         self.container.append(input)
         self.sorted = False
 
+        return
+
     def make_list(self, *values, sort=False):
+        """
+        Returns a custom list based upon the value(s) supplied
+        """
+
 
         if not self._headers_check(values):
             raise ValueError('Unable to make list with unknown fieldnames.')
@@ -117,19 +124,46 @@ class Csvrdwt(object):
 
         return result
 
-    def make_dict(self):
+    def make_dict(self, key, *values):
+        """
+        Returns a custom dictionary based on the key and value(s) supplied
+        """
 
-        pass
+        if not self._headers_check(values+(key,)):
+            raise ValueError('Unable to make list with unknown fieldnames.')
 
-    def make_custom_list(self):
+        result = dict()
 
-        pass
+        for row in self.container:
+            if len(values) == 1:
+
+                # Check if there already exists an entry for the key value, if False create a new key value
+                if result.get(row[key], False):
+
+                    # Check if value is already a tuple, if so added to that tuple, if not change value from string to tuple
+                    if isinstance(result.get(row[key]),tuple):
+                        result[row[key]] += (row[values[0]],)
+                    else:
+                        result[row[key]] = (result[row[key]],) + (row[values[0]],)
+                else:
+                    result[row[key]] = row[values[0]]
+            else:
+                if result.get(row[key], False):
+
+                    if isinstance(result.get(row[key]), list):
+                        result[row[key]].appdned(tuple([row[x] for x in values]))
+                    else:
+                        result[row[key]] = [result[row[key]]] + [tuple([row[x] for x in values])]
+
+                else:
+                    result[row[key]] = tuple([row[x] for x in values])
+
+        return result
 
     def remove_row(self, input):
         '''
         input - dictionary, keys of dictionary must match the fields of the csv
         '''
-        #self._input_check(input)
 
         # Sort data to help reduce search time
         self._input_check(input)
@@ -141,14 +175,29 @@ class Csvrdwt(object):
 
         if match:
             self.container.remove(value)
+            self.sorted_copy.remove(value)
+
+        return
 
     def _sort(self, reverse=False):
+        """
+        Creates a sorted copy of the data container
+        """
 
         self.sorted_copy = sorted(self.container,reverse=reverse,key=lambda k: k[self.fieldnames[self.sort_criteria]])
         self.sorted = True
 
+        return
+
 
     def _bsearch(self,seq, input, key):
+        """
+        Binary seach implementation
+        seq = dictionary to search
+        input = dictionary
+        key = what key value to search for
+
+        """
 
         start = 0
         end = len(seq)
@@ -188,11 +237,44 @@ class Csvrdwt(object):
         except Exception as e:
             raise e
 
+        return
+
     def sort_by(self, column=0, reverse=False):
+        """
+        Sets what header to sort by and selects ascending or decending
+        """
 
         if 0 <= column < len(self.fieldnames):
             self.sort_criteria = column
             self.sort_reversed = reverse
+
+        return
+
+    def sort(self):
+        """
+        Sorts the data container not just the copy
+        """
+
+        self.container = sorted(self.container,reverse=self.sort_reversed,key=lambda k: k[self.fieldnames[self.sort_criteria]])
+        self.sorted_copy = self.container[::]
+        self.sorted = True
+
+        return
+
+    def __len__(self):
+
+        return len(self.container)
+
+    def __getitem__(self, k):
+
+        if k < 0:
+
+            k += len(self)
+
+        if not 0 <= k < len(self):
+            raise IndexError('index out of range')
+
+        return self.container[k]
 
     def __str__(self):
 
@@ -218,7 +300,22 @@ class Csvrdwt(object):
 
 if __name__ == '__main__':
 
-    a = Csvrdwt('test.csv',new=True)
+    a = Csvrdwt('hostnames.txt')
 
-    a.write_headers('first','m','last')
-    print(a.fieldnames)
+
+
+    a.sort_by(1)
+
+    print(a.container)
+    print(a.sorted_copy)
+
+    a.remove_row({'clli': 'bftnsc54', 'abbreviation': 'blf', 'hub_code': '4S', 'city': 'bluffton'})
+
+
+    r = dict()
+
+    for row in a:
+        r[row['city']+' - '+row['clli']] = row['hub_code']
+
+    print(a.container)
+    print(a.sorted_copy)
