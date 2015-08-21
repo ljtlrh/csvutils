@@ -2,9 +2,9 @@ import csv
 
 
 class Csvrdwt(object):
-    """"
+    """
     Csv class for reading and writing to file.
-    """"
+    """
     def __init__(self, f, new=False):
 
         self.f = f
